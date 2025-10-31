@@ -8,14 +8,21 @@ use App\Models\Event;
 use App\Models\Attendee;
 use App\Http\Resources\AttendeeResource;
 use App\Http\Traits\CanLoadRelationships;
-
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class AttendeeController extends Controller
 {
 
     use CanLoadRelationships;
+    use AuthorizesRequests;
 
     Protected $relations = ['user'];    
+
+    public function __construct()
+    {
+        $this->middleware('auth:sanctum')->except(['index', 'show', 'update']);
+        $this->authorizeResource(Attendee::class, 'attendee');
+    }
 
     public function index(Event $event)
     {
@@ -55,6 +62,7 @@ class AttendeeController extends Controller
      */
     public function destroy(Event $event, Attendee $attendee)
     {
+        $this->authorize('delete-attendee', [$event, $attendee]);
         $attendee->delete();
 
         return response(status : 204);

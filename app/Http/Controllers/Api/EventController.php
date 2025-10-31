@@ -8,13 +8,22 @@ use App\Http\Traits\CanLoadRelationships;
 use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class EventController extends Controller
 {
 
     use CanLoadRelationships;
+    use AuthorizesRequests;
 
     private array $relations = ['user', 'attendees', 'attendees.user'];
+
+    public function __construct()
+    {
+        $this->middleware('auth:sanctum')->except(['index', 'show']);
+        $this->authorizeResource(Event::class);
+    }
 
     public function index()
     {
@@ -56,6 +65,14 @@ class EventController extends Controller
      */
     public function update(Request $request, Event $event)
     {
+
+        // if (Gate::denies('update-event', $event)) {
+        //     abort(403, 'Unauthorized request for event update');
+        // }
+
+        $this->authorize('update-event', $event);
+        
+
         $event->update(
             $request->validate([
                 'name' => 'sometimes|string|max:255',

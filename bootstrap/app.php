@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use Illuminate\Auth\AuthenticationException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,5 +19,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+
+        $exceptions->shouldRenderJsonWhen(fn ($request) => $request->is('api/*'));
+
+        $exceptions->renderable(function (AuthenticationException $e, $request) {
+            return response()->json([
+                'message' => 'Unauthenticated user. Please log in.'
+            ], 401);
+        });
+
     })->create();
